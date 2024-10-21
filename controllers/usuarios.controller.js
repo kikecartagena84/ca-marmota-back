@@ -7,110 +7,70 @@ import { PORT, DOMAIN, JWT_SECRET, __dirname } from '../config/config.js';
 // Bases de datos ficticias:
 const users = []
 
-// export const MockUser = {
-//     name:"Marta",
-//     username:"marta@gmail.com",
-//     password:"1234",
-//     image: 'https://picsum.photos/200'
-// }
+export const MockUser = {
+    name:"Marta",
+    username:"marta@gmail.com",
+    password:"1234",
+    image: 'https://picsum.photos/200'
+}
 
+export const getUsers = async (req, res, next) => {
+    try {
+        res.status(200).json({data: users, message: "Correcto users"})
+    } catch (error) {
+        res.status(500).json({error: "Error en el servidor"})
+    }
+}
 
 export const authLogin = async (req, res, next) => {
 
-    try {
-        const {username, password} = req.body;
-        const user = User.findOne({ username: username });
-    
-        if (!user) {
-            return res.status(400).json({message: "Usuario no encontrado"})
-        }
-    
-        const isMatch = await bcrypt.compare(password, user.password)
-    
-        if (!isMatch) {
-            return res.status(400).json({message: "Clave incorrecta"})
-        }
-    
-        // Crear jwt y devuelvo el usuario
-        // create and sign a new token(contenido purpura, llave privada, opciones(cuado expira))
-        const token = jwt.sign({username:username}, JWT_SECRET, {expiresIn: '5h'});
-    
-        res.status(200).json({data: user, message: "Correcto login", token})
-        } catch (error) {
-            res.status(500).json({error: "Error en el servidor"})
-        }
-    }
-    
-    export const createRegister =  async (req, res, next) => {
-        try {
-            const id = Math.floor(Math.random()*10000)+1;
-            const {name, username, password, image='https://picsum.photos/200'} = req.body;
-            // Hash de contraseña con bcrypt(importante el orden)
-            //                                      (contraseña, vueltas del algoritmo)
-            const hashedPassword = await bcrypt.hash(password, 10);
-    
-            // Esto es para la base de datos ficticia (hago push xq mando un json)
-            // const newUser = {id, name, username, password:hashedPassword, image};
-            // users.push(newUser);
-    
-            // Esto es para la base de datos mongo (hago save xq una colección)
-            const newUser = new User({name, username, password:hashedPassword, image:"https://picsum.photos/200"});
-            await newUser.save();
-    
-            // Obtener el usuario recien creado
-            const user = User.find((u) => u.username === username)
-            // const user = users.find((u) => {id === id})
-    
-            res.status(200).json({data: user, message: "Correcto register"})
-    
-        } catch (error) {
-            console.log(error)
-            res.status(500).json({error: error})
-        }
-    }
-//     try {
-//         const {username, password} = req.body;
-//         const user = User.findOne({ username: username });
-        
-//         if (!user) {
-//             return res.status(400).json({message: "Usuario no encontrado"})
-//         }
-        
-//         const isMatch = await bcrypt.compare(password, user.password)
-        
-//         if (!isMatch) {
-//             return res.status(400).json({message: "Clave incorrecta"})
-//     }
+try {
+    const {username, password} = req.body;
+    const user = User.findOne({ username: username });
 
-//     // Crear jwt y devuelvo el usuario
-//     // create and sign a new token(contenido purpura, llave privada, opciones(cuado expira))
-//     const token = jwt.sign({username:username}, JWT_SECRET, {expiresIn: '5h'});
-    
-//     res.status(200).json({data: user, message: "Correcto login", token})
-// } catch (error) {
-//     res.status(500).json({error: "Error en el servidor"})
-// }
-// }
+    if (!user) {
+        return res.status(400).json({message: "Usuario no encontrado"})
+    }
 
-export const createRegisters =  async (req, res, next) => {
+    const isMatch = await bcrypt.compare(password, user.password)
+
+    if (!isMatch) {
+        return res.status(400).json({message: "Clave incorrecta"})
+    }
+
+    // Crear jwt y devuelvo el usuario
+
+    // create and sign a new token(contenido purpura, llave privada, opciones(cuado expira))
+    const token = jwt.sign({username:username}, JWT_SECRET, {expiresIn: '5h'});
+
+    res.status(200).json({data: user, message: "Correcto login", token})
+    } catch (error) {
+        res.status(500).json({error: "Error en el servidor"})
+    }
+}
+
+export const createRegister =  async (req, res, next) => {
     try {
+        const id = Math.floor(Math.random()*10000)+1;
         const {name, username, password, image='https://picsum.photos/200'} = req.body;
         // Hash de contraseña con bcrypt(importante el orden)
-        // (contraseña, vueltas del algoritmo)
+        //                                      (contraseña, vueltas del algoritmo)
         const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Crear un nuevo usuario y lo mando a la base de datos
+
+        // Esto es para la base de datos ficticia (hago push xq mando un json)
+        // const newUser = {id, name, username, password:hashedPassword, image};
+        // users.push(newUser);
+
+        // Esto es para la base de datos mongo (hago save xq una colección)
         const newUser = new User({name, username, password:hashedPassword, image:"https://picsum.photos/200"});
         await newUser.save();
-        
-        // Obtener el usuario recien creado para devolverlo
-        const users = await User.find({ username: username });
-        
-        if (users.length > 0) {
-            return res.status(400).json({ message: 'El nombre de usuario ya está en uso' });
-        }
-        res.status(200).json({data: users, message: "Correcto register"})
-        
+
+        // Obtener el usuario recien creado
+        const user = User.find((u) => u.username === username)
+        // const user = users.find((u) => {id === id})
+
+        res.status(200).json({data: user, message: "Correcto register"})
+
     } catch (error) {
         console.log(error)
         res.status(500).json({error: error})
@@ -125,13 +85,6 @@ export const getAdmin =  async (req, res, next) => {
     }
 }
 
-export const getUsers = async (req, res, next) => {
-    try {
-        res.status(200).json({data: users, message: "Correcto users"})
-    } catch (error) {
-        res.status(500).json({error: "Error en el servidor"})
-    }
-}
 export const getUserByUsername = async (req, res, next) => {
     try {
         const username = req.params.id;
