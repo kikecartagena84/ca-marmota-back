@@ -1,6 +1,10 @@
+// Permite leer las variables de entorno de un archivo .env
 import dotenv from 'dotenv';
+
 dotenv.config();
 
+// Para saber cual es la carpeta en la que se está ejecutando el servidor. 
+//Dice exactamente en que carpeta se encuentra el archivo en el index.js middlewares
 // Para que vercel acceda a nuestra carpeta public
 import path from 'path';
 export const __dirname = path.resolve();

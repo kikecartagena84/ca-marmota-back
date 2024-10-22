@@ -10,8 +10,8 @@ Nuestro Back tendrá una API Rest con rutas para Auth y Usuarios. También posee
 - [x] Página de inicio del backend
 - [x] Crear archivo de rutas index.routes.js (rutas más ordenadas)
 - [x] Crear controladores para las rutas (usuarios.controller.js)
-- [] Crear una ruta protegida (/admin)
 - [] Hash con Bcrypt
+- [] Crear una ruta protegida (/admin)
 - [] JWT con JsonWebToken para protección de rutas privadas
 - [] Crear middleware auth.js que devuelve true siempre
 - [] Esquemas de Mongoose para usuarios (nombre, email, contraseña)
@@ -49,6 +49,8 @@ JWT_SECRET = "3804654c6e96ba5f96128f098877179c"
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Para saber cual es la carpeta en la que se está ejecutando el servidor. 
+//Dice exactamente en que carpeta se encuentra el archivo en el index.js middlewares
 // Para que vercel acceda a nuestra carpeta public
 import path from 'path';
 export const __dirname = path.resolve();
@@ -146,12 +148,173 @@ const router = Router();
 
 // Rutas
 // Registro de usuarios
+router.get('/users', getUsers);
 router.post('/register', createRegister);
 router.post('/login', authLogin);
-// router.get('/users', getUsers);
+router.get('/admin', getAdmin);
 
 export default router;
 ```
 
+7. Crear controladores para las rutas (usuarios.controller.js)
+IMPORTANTISIMO!!! Estamos probando si funciona el frente con el back, por lo que no vamos a hacer la conexión a la base de datos. Vamos a hacer un `mock` de la base de datos.
+Pruebas del backend (rutas iniciales). 
+- Usuario vacio de prueba
+- Usuarios de prueba con contenido
+- Rutas de prueba
+```js
+// Bases de datos ficticias:
+const user = []
 
-Clase 38 25:00 min
+export const MockUser = {
+    name:"Marta",
+    username:"marta@gmail.com",
+    password:"1234",
+    image: 'https://picsum.photos/200',
+    isAdmin: false,
+}
+
+export const Users = async (req, res, next) => {
+    try {
+        res.status(200).json({data: user, message: "Estos son los usuarios"})
+    } catch (error) {
+        res.status(500).json({error: "Error en el servidor"})
+    }
+}
+
+export const Login = async (req, res, next) => {
+    console.log("Haciendo login")
+    try {
+        res.status(200).json({data: user, message: "Has hecho login"})
+    } catch (error) {
+        res.status(500).json({error: "Error en el servidor"})
+    }
+}
+
+export const Register = async (req, res, next) => {
+    console.log("Haciendo register")
+    try {
+        res.status(200).json({data: user, message: "Registrado con exito"})
+    } catch (error) {
+        res.status(500).json({error: "Error en el servidor"})
+    }
+}
+
+export const Admin = async (req, res, next) => {
+    console.log("Contenido privado de admin")
+    try {
+        res.status(200).json({data: user, message: "Estos son los usuarios"})
+    } catch (error) {
+        res.status(500).json({error: "Error en el servidor"})
+    }
+}
+```
+Comprobamos si funciona el servidor con un `console.log("Haciendo login")` en la función `Login` y lo probamos en el navegador. Y añadimos el MockUser a la función `Login` para que devuelva un usuario. res.status(200).json({data: `MockUser`, message: "Has hecho login"})
+```js
+npm run dev
+```
+y en el navegador
+```bash
+http://localhost:3000/api/v1/login
+```
+o con Thunder Client
+POST  http://localhost:3000/api/v1/login
+POST  http://localhost:3000/api/v1/register
+GET  http://localhost:3000/api/v1/users
+GET  http://localhost:3000/api/v1/admin
+
+8. Hash con Bcrypt en usuarios.controller.js
+```js 
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config/config.js';
+
+// Cambiamos el registro para HASEAR la contraseña
+export const register = async (req, res, next) => {
+    
+    try {
+        // Deconstruimos los datos del req.body. Si no hay imagen, ponemos una por defecto
+        const { name, username, password, image:'https://picsum.photos/200', isAdmin } = req.body;
+        console.log("Haciendo register")
+    
+        // 1. Mandamos información donde creamos un usuario nurvo con la contraseña hasheada. 
+        const newUser = {
+            name,
+            username,
+            password: await bcrypt.hash(password, 10),
+            image,
+            isAdmin
+        }
+        // 2. Añadimos el nuevo usuario en el array de prueba llamado user
+        user.push(newUser);
+
+        // 3. Devolvemos el usuario creado
+        // Para esto, tengo que devolver el usuario recién creado buscando dentro del array de usuarios. 
+        const userCreated = user.find((u) => u.username === username)
+        res.status(200).json({data: userCreated, message: "Registrado con exito"})
+    } catch (error) {
+        res.status(500).json({error: "Error en el servidor"})
+    }
+}
+```
+PARA PROBARLO EN THUNDER CLIENT:
+HABRIMOS DOS VENTANAS AL MISMO TIEMPO:
+POST  http://localhost:3000/api/v1/register  en la parte del body/json escribimos
+```json
+{
+    "name": "Marta",
+    "username": "marta@gmail.com",
+    "password": "1234",
+    "isAdmin": true
+}
+```
+nos devuelve lo mismo:
+```json
+{
+    "name": "Marta",
+    "username": "marta@gmail.com",
+    "password": "1234",
+    "image": "https://picsum.photos/200",
+    "isAdmin": true
+}
+```
+y miramos si se ha mandado correctamente:
+GET http://localhost:3000/api/v1/users
+esta ruta nos devolveá todos los usuarios que hemos creado.
+
+para HASHEAR la contraseña, utilizamos la función `bcrypt.hash(password, 10)` que nos devolverá la contraseña hasheada.
+```js
+password: await bcrypt.hash(password, 10),
+```
+
+Lo mismo para la función `Login`:
+```js
+export const login = async (req, res, next) => {
+    try {
+        console.log("Haciendo login")
+        // RECIBIMOS LOS DATOS DEL FRONT
+        // 1. Deconstruimos los datos del req.body 
+        const { username, password } = req.body;
+
+        // OPERAMOS CON LOS DATOS RECIBIDOS DEL FRON Y LOS DE LA BASE DE DATOS
+        2. // 2. Buscamos el usuario en el array de usuarios
+        const userFound = user.find((u) => u.username === username)
+        // 3. Si no existe el usuario, devolvemos un error
+        if (!userFound) {
+            return res.status(404).json({error: "Usuario no encontrado"})
+        }
+        // 4. Comparamos la contraseña hasheada con la contraseña que nos mandan
+        const isMatch = await bcrypt.compare(password, userFound.password)
+        // 5. Si no coincide, devolvemos un error
+        if (!isMatch) {
+            return res.status(401).json({error: "Contraseña incorrecta"})
+        }
+        // MANDAMOS LOS DATOS AL FRONT
+        // 6. Si coincide, devolvemos el usuario
+        res.status(200).json({data: userFound, message: "Has hecho login"})
+    } catch (error) {
+        res.status(500).json({error: "Error en el servidor"})
+    }
+}
+```
+
