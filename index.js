@@ -11,7 +11,6 @@ import { __dirname } from './config/config.js';
 const app = express();
 
 // Middlewares
-
 // Conectar a la base de datos
 connectDB();
 
@@ -23,7 +22,7 @@ app.use(cors());
 app.use(express.json());
 // true para parsear arrays y objetos complejos
 app.use(express.urlencoded({extended: true}));
-// Rutas
+// Rutas de la API que serán el localhost:3000 + /api/v1 + /ruta
 app.use("/api/v1", indexRoutes);
 
 // Middleware para manejo de errores

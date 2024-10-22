@@ -22,6 +22,7 @@ export const getUsers = async (req, res, next) => {
     }
 }
 
+
 export const authLogin = async (req, res, next) => {
 
 try {
@@ -48,6 +49,7 @@ try {
         res.status(500).json({error: "Error en el servidor"})
     }
 }
+
 
 export const createRegister =  async (req, res, next) => {
     try {
@@ -77,6 +79,7 @@ export const createRegister =  async (req, res, next) => {
     }
 }
 
+
 export const getAdmin =  async (req, res, next) => {
     try {
         res.status(200).json({message: "Correcto admin privado"})
@@ -96,6 +99,7 @@ export const getUserByUsername = async (req, res, next) => {
     }
 }
 
+
 export const createUser = async (req, res, next) => {
     try {
         const {username, email, password} = req.body;
@@ -108,6 +112,7 @@ export const createUser = async (req, res, next) => {
     }
 }
 
+
 export const deleteUser = async (req, res, next) => {
     try {
         const userId = req.params.id;
@@ -118,6 +123,7 @@ export const deleteUser = async (req, res, next) => {
         res.status(500).json({message: error.message})
     }
 }
+
 
 export const updateUser = async (req, res, next) => {
     try {
@@ -132,6 +138,7 @@ export const updateUser = async (req, res, next) => {
         res.status(500).json({message: error.message})
     }
 }
+
 
 // export const updateEmail = async (req, res, next) => {
 //     try {
