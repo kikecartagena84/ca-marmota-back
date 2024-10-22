@@ -10,7 +10,7 @@ Nuestro Back tendrá una API Rest con rutas para Auth y Usuarios. También posee
 - [x] Página de inicio del backend
 - [x] Crear archivo de rutas index.routes.js (rutas más ordenadas)
 - [x] Crear controladores para las rutas (usuarios.controller.js)
-- [] Hash con Bcrypt
+- [x] Hash con Bcrypt
 - [] Crear una ruta protegida (/admin)
 - [] JWT con JsonWebToken para protección de rutas privadas
 - [] Crear middleware auth.js que devuelve true siempre
@@ -315,6 +315,92 @@ export const login = async (req, res, next) => {
     } catch (error) {
         res.status(500).json({error: "Error en el servidor"})
     }
+}
+```
+
+9. Tokens: Crea una llave llamada token. Cada vez que se logea un usuario se crea una llave nueva. Con esa llave se puede acceder a las rutas protegidas. Tanto en el back como en el front. 
+Cada vez que se hace un fetch se fija en la llave. Si es correcta, se accede, sino, no. 
+1. Creamos un token con JWT en la función `login`. Justo antes de enviar la informacion otra vez al front: 
+```js
+export const login = async (req, res, next) => {
+    try {
+        const { username, password } = req.body;
+        const userFound = user.find((u) => u.username === username)
+
+        if (!userFound) {
+            return res.status(404).json({error: "Usuario no encontrado"})
+        }
+
+        const isMatch = await bcrypt.compare(password, userFound.password)
+
+        if (!isMatch) {
+            return res.status(401).json({error: "Contraseña incorrecta"})
+        }
+
+        // Creamos un token con JWT
+        const token = jwt.sign({username: userFound.username}, JWT_SECRET, {expiresIn: '24h'});
+        // Mandamos el token al front
+        res.status(200).json({data: userFound, token, message: "Has hecho login"})
+    } catch (error) {
+        res.status(500).json({error: "Error en el servidor"})
+    }
+}
+```
+// Creamos un token con JWT para el ADMIN. 
+        const token = jwt.sign({username: userFound.username, isAdmin: userFound.isAdmin}, JWT_SECRET)
+
+
+```js
+import { JWT_SECRET } from "../config/config.js";
+import jwt from 'jsonwebtoken'
+
+export const authenticateToken = (req, res, next) => {
+    // 1. Recibimos el token del front
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    // 2. Si no hay token, devolvemos un error 401
+    if(!token) return res.sendStatus(401); //unauthorized
+    // 3. Verificamos el token
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if(err) return res.sendStatus(403); //forbidden
+        req.user = user;
+        // Si la llave es correcta, hacemos un next()
+        next()
+    })
+}
+```
+y lo añadimos a la ruta de admin
+```js
+router.get('/admin', authenticateToken, getAdmin);
+```
+
+Para probarlo con Thunder Client.
+POST  http://localhost:3000/api/v1/login
+```json
+{
+    "username": "caca@gmail.com",
+    "password": "1234"
+}
+y nos devuelve el usuario y el token
+```json
+{
+    "data": {
+        .....
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImNhY2FAZ21haWwuY29tIiwiaWF0IjoxNzI5NjIxNTY5LCJleHAiOjE3Mjk2Mzk1Njl9.nxt5IA80om8jIcYnps-vAm3_rv4lEGuvTatn50SSYaQ"
+    },
+    "message": "Has hecho login"
+}
+```	
+GET  http://localhost:3000/api/v1/admin
+en la parte de Auth ponemos el token que nos ha devuelto el login
+```bash
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImNhY2FAZ21haWwuY29tIiwiaWF0IjoxNzI5NjIxNTY5LCJleHAiOjE3Mjk2Mzk1Njl9.nxt5IA80om8jIcYnps-vAm3_rv4lEGuvTatn50SSYaQ
+```
+y nos devolverá el contenido privado de admin
+```json
+{
+    "message": "Estos son los usuarios"
 }
 ```
 
