@@ -5,8 +5,8 @@ import jwt from 'jsonwebtoken' // Crear y leer token
 import { JWT_SECRET, __dirname } from '../config/config.js';
 
 export const getUsers = async (req, res, next) => {
-    const users = await User.find();
     try {
+        const users = await User.find();
         res.status(200).json({data: users, message: "Correcto users"})
     } catch (error) {
         res.status(500).json({error: "Error en el servidor"})
