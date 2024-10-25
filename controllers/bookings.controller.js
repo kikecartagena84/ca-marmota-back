@@ -40,7 +40,7 @@ export const getAllBookings = async (req, res) => {
 };
 
 export const getBookingByUserId = async (req, res) => {
-    const userId = req.params.userId; // Asegúrate de usar el nombre correcto aquí
+    const userId = req.params.userId; 
 
     try {
         const bookings = await Booking.find({ userId }) // O { userId: userId }
@@ -57,7 +57,7 @@ export const cancelBooking = async (req, res) => {
     const bookingId = req.params.bookingId;
     console.log('User bookingId:', bookingId);
     try {
-        const booking = await Booking.findById(bookingId); // No necesitas un objeto aquí
+        const booking = await Booking.findOne({ _id: bookingId });
         if (!booking) return res.status(404).json({ message: 'Reserva no encontrada' });
 
         // Cambia el estado de la reserva a 'cancelled'
@@ -67,7 +67,10 @@ export const cancelBooking = async (req, res) => {
 
         // Eliminar la reserva de la habitación
         console.log('User roomId:', booking.roomId);
-        await Room.findByIdAndUpdate(booking.roomId, { $pull: { currentBookings: bookingId } });
+        await Room.findOneAndUpdate(
+            { _id: booking.roomId }, // Busca la habitación por su id
+            { $pull: { currentBookings: bookingId } }
+        );
 
         res.json({ message: 'Reserva cancelada exitosamente' });
     } catch (error) {
