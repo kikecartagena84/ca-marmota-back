@@ -56,27 +56,34 @@ export const getBookingByUserId = async (req, res) => {
 export const cancelBooking = async (req, res) => {
     const bookingId = req.params.bookingId;
     console.log('User bookingId:', bookingId);
+
     try {
         const booking = await Booking.findOne({ _id: bookingId });
         if (!booking) return res.status(404).json({ message: 'Reserva no encontrada' });
 
-        // Cambia el estado de la reserva a 'cancelled'
+        // Cambiar el estado de la reserva a 'cancelled'
         booking.status = 'cancelled';
-        console.log('User status:', booking.status);
-        await booking.save(); // Guarda los cambios en la reserva
+        await booking.save();
 
-        // Eliminar la reserva de la habitación
-        console.log('User roomId:', booking.roomId);
-        await Room.findOneAndUpdate(
-            { _id: booking.roomId }, // Busca la habitación por su id
-            { $pull: { currentBookings: bookingId } }
+        // Obtener el roomId asociado a la reserva
+        const roomId = booking.roomId.toString(); // Convertir roomId a string
+        console.log('Formatted roomId:', roomId);
+
+        // Actualizar la habitación usando el bookingId en el $pull
+        const roomUpdate = await Room.findOneAndUpdate(
+            { _id: roomId },
+            { $pull: { currentBookings: bookingId } }, // Usar bookingId aquí
+            { new: true } // Devolver el documento actualizado
         );
+
+        console.log('Updated Room:', roomUpdate);
 
         res.json({ message: 'Reserva cancelada exitosamente' });
     } catch (error) {
         res.status(500).json({ message: 'Error al cancelar la reserva', error });
     }
 };
+
 
 export const updateBooking = async (req, res) => {
     const bookingId = req.params.bookingId;

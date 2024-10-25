@@ -13,12 +13,23 @@ export const roomsAvailability = async (req, res) => {
     const { checkIn, checkOut } = req.body;
 
     try {
-        const rooms = await Room.find({});
+        // Obtener habitaciones y popular las reservas actuales
+        const rooms = await Room.find({}).populate('currentBookings'); // Asegúrate de que el campo de referencia esté bien definido
+
+        // Convertir las fechas a objetos Date para comparación
+        const checkInDate = new Date(checkIn);
+        const checkOutDate = new Date(checkOut);
+
         const availableRooms = rooms.filter(room => {
             return room.currentBookings.every(booking => {
+                // Aquí asumimos que `booking` ahora tiene los campos `checkIn` y `checkOut`
+                const bookingCheckIn = new Date(booking.checkIn);
+                const bookingCheckOut = new Date(booking.checkOut);
+
+                // Verificar si hay una superposición
                 return (
-                    new Date(checkIn) > new Date(booking.checkOut) || 
-                    new Date(checkOut) < new Date(booking.checkIn)
+                    checkOutDate <= bookingCheckIn || // La nueva reserva termina antes del check-in existente
+                    checkInDate >= bookingCheckOut      // La nueva reserva comienza después del check-out existente
                 );
             });
         });
