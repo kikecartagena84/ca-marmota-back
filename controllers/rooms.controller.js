@@ -15,21 +15,16 @@ export const roomsAvailability = async (req, res) => {
     try {
         const rooms = await Room.find({});
         const availableRooms = rooms.filter(room => {
-            let isAvailable = true;
-            room.currentBookings.forEach(booking => {
-                if (
-                    (new Date(checkIn) <= new Date(booking.checkOut) && new Date(checkOut) >= new Date(booking.checkIn))
-                ) {
-                    isAvailable = false;
-                }
+            return room.currentBookings.every(booking => {
+                return (
+                    new Date(checkIn) > new Date(booking.checkOut) || 
+                    new Date(checkOut) < new Date(booking.checkIn)
+                );
             });
-
-            return isAvailable; // Retornar solo si está disponible
         });
 
         res.json(availableRooms);
-    }
-    catch (error) {
+    } catch (error) {
         res.status(500).json({ message: 'Error al obtener las habitaciones', error });
     }
 };
