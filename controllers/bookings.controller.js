@@ -41,7 +41,7 @@ export const getAllBookings = async (req, res) => {
 
 export const getBookingByUserId = async (req, res) => {
     const userId = req.params.userId; // Asegúrate de usar el nombre correcto aquí
-    console.log('User ID:', userId); // Para verificar si se está recibiendo el ID
+
     try {
         const bookings = await Booking.find({ userId }) // O { userId: userId }
             .populate({ path: 'roomId', select: 'roomName rentPerDay' });
@@ -52,6 +52,48 @@ export const getBookingByUserId = async (req, res) => {
         res.status(500).json({ message: 'Error al obtener las reservas' });
     }
 }
+
+export const cancelBooking = async (req, res) => {
+    const bookingId = req.params.bookingId;
+    console.log('User bookingId:', bookingId);
+    try {
+        const booking = await Booking.findById(bookingId); // No necesitas un objeto aquí
+        if (!booking) return res.status(404).json({ message: 'Reserva no encontrada' });
+
+        // Cambia el estado de la reserva a 'cancelled'
+        booking.status = 'cancelled';
+        console.log('User status:', booking.status);
+        await booking.save(); // Guarda los cambios en la reserva
+
+        // Eliminar la reserva de la habitación
+        console.log('User roomId:', booking.roomId);
+        await Room.findByIdAndUpdate(booking.roomId, { $pull: { currentBookings: bookingId } });
+
+        res.json({ message: 'Reserva cancelada exitosamente' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al cancelar la reserva', error });
+    }
+};
+
+export const updateBooking = async (req, res) => {
+    const bookingId = req.params.bookingId;
+    try {
+        const booking = await Booking.findById(bookingId);
+        if (!booking) return res.status(404).json({ message: 'Reserva no encontrada' });
+
+        const updatedBooking = await Booking.findByIdAndUpdate
+            (bookingId, req.body, {
+                new: true,
+                runValidators: true
+            });
+
+        res.json({ message: 'Reserva actualizada exitosamente', booking: updatedBooking });
+    }
+    catch (error) {
+        res.status(500).json({ message: 'Error al actualizar la reserva', error });
+    }
+}
+
 
 
 // export const deleteProduct= async (req, res, next) => {

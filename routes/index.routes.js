@@ -6,7 +6,7 @@ import {authenticateToken} from '../middlewares/auth.js'
 import { getLandings } from "../controllers/landings.controller.js";
 import { createRegister, getUsers, authLogin, getAdmin, updateUser, deleteUser } from "../controllers/usuarios.controller.js";
 import { getAllRooms, roomsAvailability, getRoomById } from "../controllers/rooms.controller.js";
-import { createBooking, getAllBookings, getBookingByUserId } from "../controllers/bookings.controller.js";
+import { createBooking, getAllBookings, getBookingByUserId, cancelBooking, updateBooking } from "../controllers/bookings.controller.js";
 const router = Router();
 
 // Rutas
@@ -36,7 +36,8 @@ router.post('/booking', createBooking);
 router.get('/bookings', getAllBookings);
 // falta authenticateToken
 router.get('/bookings/:userId', authenticateToken, getBookingByUserId);
-// router.put('/bookings/:id', updateBooking);
-// router.delete('/bookings/:id', deleteBooking);
+router.put('/bookings/:bookingId', cancelBooking);
+router.put('/bookings/:bookingId', updateBooking);
+
 
 export default router;
