@@ -15,7 +15,7 @@ const app = express();
 connectDB();
 
 // Para subir archivos estaticos desde el servidor (vercel)
-app.use(express.static(path.join(__dirname, "public"))) 
+app.use(express.static(path.join(__dirname, "public")))
 // Comunicación entre servidores
 app.use(cors());
 // Para que express entienda json
